@@ -13,9 +13,10 @@ class WebParser(ABC):
         self.datetime_class_name = ''
         self.article_scrape = ''
         self.article_body_scrape = ''
+        self.source = ''
         self.data_store = []
     @abstractmethod
-    def scrape_links(self) -> None:
+    def scrape_links(self) -> list:
         pass
 
     @abstractmethod
@@ -27,7 +28,7 @@ class WebParser(ABC):
         pass
     
     @abstractmethod
-    def scrape_article_body(self) -> None:
+    def scrape_article_body(self, link) -> None:
         pass
 
     @abstractmethod
@@ -71,7 +72,7 @@ class RBCParser(WebParser):
         if overview != None:
             overview = overview.get_text(separator=" ", strip=True).replace("\xa0", " ")
         else:
-            overview = '-'
+            overview = ''
         return overview
     
     def scrape_article_body(self, link) -> None:
@@ -102,12 +103,79 @@ class RBCParser(WebParser):
             self.data_store.append({
             'title': self.scrape_title(),
             'datetime': self.scrape_datetime(),
-            'overview': self.scrape_overview(),
-            'article_text': self.scrape_article_text(),
+            'article_text': f'{self.scrape_overview()} {self.scrape_article_text()}',
             'source': self.source
             })
         return self.data_store
 
+class InterfaxParser(WebParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.url = "https://www.interfax.ru/business/"
+        self.base_url = "https://www.interfax.ru"
+        self.links_class_name = 'timeline'
+        self.title_class_name = "headline" #this is .find(itemprop="headline") parameter
+        self.overview_class_name = "in" #plus itemprop="description"
+        self.article_class_name = "articleBody" #this is .find(itemprop="articleBody") parameter
+        self.source = "Интерфакс"
+    
+    def scrape_links(self) -> list:
+        response = requests.get(url=self.url)
+        if (response.status_code != 200):
+            print("Error: wrong status code", response.status_code)
+            exit()
+
+        scrape = BeautifulSoup(response.text, self.parser_type)
+        links_scrape = scrape.find("div", class_="timeline")
+        return [i['href'] for i in links_scrape.find_all('a')]
+    
+    def scrape_title(self) -> str:
+        title = self.article_scrape.find("h1", itemprop=self.title_class_name)
+        return title.get_text(separator=" ", strip=True).replace("\xa0", " ")
+
+    def scrape_overview(self) -> str:
+        return ''
+
+    def scrape_article_body(self, link) -> None:
+        response = requests.get(link)
+        response.encoding = 'windows-1251'
+        if response.status_code != 200:
+            print("Error: wrong status code", response.status_code)
+            exit()
+        
+        self.article_scrape = BeautifulSoup(response.text, self.parser_type)
+        self.article_body_scrape = self.article_scrape.find("article", itemprop=self.article_class_name)
+    
+    def scrape_article_text(self) -> str:
+        if (self.article_body_scrape != None):
+            article_text = ' '.join([i.get_text(separator=" ", strip=True).replace("\xa0", " ") for i in self.article_body_scrape.find_all('p')])
+        else:
+            article_text = 'None'
+        return article_text
+
+    def scrape_datetime(self) -> str:
+        date_element = self.article_scrape.find('time')
+        if date_element and 'datetime' in date_element.attrs:
+            datetime_value = date_element['datetime']
+        else:
+            datetime_value = '-'
+        return datetime_value
+
+    def get_full_data(self) -> list: #call this func only
+        links = self.scrape_links()
+        for link in links:
+            link = self.base_url + link
+            self.scrape_article_body(link=link)
+            if self.scrape_article_text != 'None':
+                self.data_store.append({
+                    'title': self.scrape_title(),
+                    'datetime': self.scrape_datetime(),
+                    'article_text': f'{self.scrape_overview()} {self.scrape_article_text()}',
+                    'source': self.source
+                })
+        return self.data_store
+        
+        
 
             
             
