@@ -1,10 +1,18 @@
 import requests
 from bs4 import BeautifulSoup
 from abc import ABC, abstractmethod
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+
 
 class WebParser(ABC):
     def __init__(self) -> None:
         self.url = ''
+        self.driver = ''
         self.parser_type = 'html.parser'
         self.links_class_name = ''
         self.title_class_name = ''
@@ -15,6 +23,12 @@ class WebParser(ABC):
         self.article_body_scrape = ''
         self.source = ''
         self.data_store = []
+
+    def start_driver(self) -> None:
+        options = Options()
+        options.add_argument("--headless")
+        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
     @abstractmethod
     def scrape_links(self) -> list:
         pass
@@ -55,12 +69,27 @@ class RBCParser(WebParser):
         self.source = 'РБК'
                 
     def scrape_links(self) -> list:
-        response = requests.get(url=self.url)
-        if (response.status_code != 200):
-            print("Error: wrong status code", response.status_code)
-            exit()
+        super().start_driver()
+        self.driver.get(self.url)
+        time.sleep(2)
 
-        scrape = BeautifulSoup(response.text, self.parser_type)
+        start_time = time.time()
+        duration = 2
+
+        last_height = self.driver.execute_script("return document.body.scrollHeight")
+        while True:
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2)
+            new_height = self.driver.execute_script("return document.body.scrollHeight")
+
+            if time.time() - start_time > duration:
+                break
+            
+            if new_height == last_height:
+                break
+            last_height = new_height
+
+        scrape = BeautifulSoup(self.driver.page_source, self.parser_type)
         return [i['href'] for i in scrape.find_all('a', class_=self.links_class_name)]
     
     def scrape_title(self) -> str:
@@ -120,12 +149,27 @@ class InterfaxParser(WebParser):
         self.source = "Интерфакс"
     
     def scrape_links(self) -> list:
-        response = requests.get(url=self.url)
-        if (response.status_code != 200):
-            print("Error: wrong status code", response.status_code)
-            exit()
+        super().start_driver()
+        self.driver.get(self.url)
+        time.sleep(2)
 
-        scrape = BeautifulSoup(response.text, self.parser_type)
+        start_time = time.time()
+        duration = 2
+
+        last_height = self.driver.execute_script("return document.body.scrollHeight")
+        while True:
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2)
+            new_height = self.driver.execute_script("return document.body.scrollHeight")
+
+            if time.time() - start_time > duration:
+                break
+            
+            if new_height == last_height:
+                break
+            last_height = new_height
+
+        scrape = BeautifulSoup(self.driver.page_source, self.parser_type)
         links_scrape = scrape.find("div", class_="timeline")
         return [i['href'] for i in links_scrape.find_all('a')]
     
@@ -174,9 +218,3 @@ class InterfaxParser(WebParser):
                     'source': self.source
                 })
         return self.data_store
-        
-        
-
-            
-            
-

@@ -176,3 +176,4 @@ cython_debug/
 #custom 
 test.py
 pars.py
+data.json
