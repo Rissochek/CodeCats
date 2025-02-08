@@ -8,3 +8,12 @@ class Article(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Exchanges(models.Model):
+    company_name = models.CharField(max_length=255)
+    datetime = models.DateTimeField()
+    price = models.FloatField()
+
+    def __str__(self):
+        return f"{self.company_name} - {self.price} ({self.timestamp})"
