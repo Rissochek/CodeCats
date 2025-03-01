@@ -5,9 +5,54 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+import re
+import pymorphy3
 import time
 
+banking_keywords = [
+    "банк", "финанс", "кредит", "инвестиция", "актив", "курс",
+    "процент", "ставка", "дебет", "кредитование", "капитал",
+    "акция", "вклад", "прибыль", "убыток"
+]
+
+# ключевые слова Энергетики
+oil_gas_keywords = [
+    "нефть", "газ", "добыча", "бурение", "транспортировка",
+    "переработка", "качество", "нефтепровод", "газопровод",
+    "объём", "инфраструктура", "технология", "энергия",
+    "рынок", "цена"
+]
+
+morph = pymorphy3.MorphAnalyzer()
+
+def determine_sphere(article_text):
+
+    banking_count = 0
+    oil_gas_count = 0
+
+    # разделение текста на слова
+    words = re.findall(r'\w+', article_text.lower())
+
+    for word in words:
+        lemma = morph.parse(word)[0].normal_form
+
+        if lemma in banking_keywords:
+            banking_count += 1
+        elif lemma in oil_gas_keywords:
+            oil_gas_count += 1
+
+    # определение сферы
+    if banking_count > oil_gas_count:
+        return "Финансы"
+    elif oil_gas_count > banking_count:
+        return "Энергетика"
+    elif oil_gas_count == banking_count and oil_gas_count > 0:
+        return "Финансы/Энергетика"
+    else:
+        return None  # если ключевые слова не найдены, возвращаем None
 
 class WebParser(ABC):
     def __init__(self) -> None:
@@ -74,12 +119,12 @@ class RBCParser(WebParser):
         time.sleep(2)
 
         start_time = time.time()
-        duration = 2
+        duration = 100
 
         last_height = self.driver.execute_script("return document.body.scrollHeight")
         while True:
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(2)
+            time.sleep(1)
             new_height = self.driver.execute_script("return document.body.scrollHeight")
 
             if time.time() - start_time > duration:
@@ -129,12 +174,16 @@ class RBCParser(WebParser):
         links = self.scrape_links()
         for link in links:
             self.scrape_article_body(link=link)
-            self.data_store.append({
-            'title': self.scrape_title(),
-            'datetime': self.scrape_datetime(),
-            'article_text': f'{self.scrape_overview()} {self.scrape_article_text()}',
-            'source': self.source
-            })
+            article_text = f'{self.scrape_overview()} {self.scrape_article_text()}'
+            article_type = determine_sphere(article_text)
+            if self.scrape_article_text != 'None' and article_type is not None:
+                self.data_store.append({
+                    'title': self.scrape_title(),
+                    'datetime': self.scrape_datetime(),
+                    'article_text': article_text,
+                    'type': article_type,
+                    'source': self.source
+                })
         return self.data_store
 
 class InterfaxParser(WebParser):
@@ -154,39 +203,42 @@ class InterfaxParser(WebParser):
         time.sleep(2)
 
         start_time = time.time()
-        duration = 2
+        duration = 1000
 
-        last_height = self.driver.execute_script("return document.body.scrollHeight")
         while True:
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(2)
-            new_height = self.driver.execute_script("return document.body.scrollHeight")
-
+            print(f'{time.time() - start_time} - loaded data')
+            self.driver.execute_script("getMoreTimeline()")
+            time.sleep(0.1)
+            link_elements = self.driver.find_elements(By.CSS_SELECTOR, '.timeline a')
+            print(len(link_elements))
             if time.time() - start_time > duration:
                 break
-            
-            if new_height == last_height:
-                break
-            last_height = new_height
 
-        scrape = BeautifulSoup(self.driver.page_source, self.parser_type)
-        links_scrape = scrape.find("div", class_="timeline")
-        return [i['href'] for i in links_scrape.find_all('a')]
+        link_elements = self.driver.find_elements(By.CSS_SELECTOR, '.timeline a')
+        print(len(link_elements))
+        return [element.get_attribute('href') for element in link_elements]
     
     def scrape_title(self) -> str:
-        title = self.article_scrape.find("h1", itemprop=self.title_class_name)
+        try:
+            title = self.article_scrape.find("h1", itemprop=self.title_class_name)
+        except Exception as e:
+            print("no title", e)
+            return "No Title"
+        
         return title.get_text(separator=" ", strip=True).replace("\xa0", " ")
 
     def scrape_overview(self) -> str:
         return ''
 
     def scrape_article_body(self, link) -> None:
-        response = requests.get(link)
-        response.encoding = 'windows-1251'
-        if response.status_code != 200:
-            print("Error: wrong status code", response.status_code)
-            exit()
+        try: 
+            response = requests.get(link)
+        except Exception as e:
+            print("failed get article body", e)
+            self.article_body_scrape = None
+            return
         
+        response.encoding = 'windows-1251'
         self.article_scrape = BeautifulSoup(response.text, self.parser_type)
         self.article_body_scrape = self.article_scrape.find("article", itemprop=self.article_class_name)
     
@@ -198,7 +250,12 @@ class InterfaxParser(WebParser):
         return article_text
 
     def scrape_datetime(self) -> str:
-        date_element = self.article_scrape.find('time')
+        try:
+            date_element = self.article_scrape.find('time')
+        except Exception as e:
+            print("error data", e)
+            datetime_value = '-'
+            return
         if date_element and 'datetime' in date_element.attrs:
             datetime_value = date_element['datetime']
         else:
@@ -207,14 +264,19 @@ class InterfaxParser(WebParser):
 
     def get_full_data(self) -> list: #call this func only
         links = self.scrape_links()
+        count = 1
         for link in links:
-            link = self.base_url + link
+            print(f'link {count} was readed')
+            count += 1
             self.scrape_article_body(link=link)
-            if self.scrape_article_text != 'None':
+            article_text = f'{self.scrape_overview()} {self.scrape_article_text()}'
+            article_type = determine_sphere(article_text)
+            if self.scrape_article_text != 'None' and article_type is not None:
                 self.data_store.append({
                     'title': self.scrape_title(),
                     'datetime': self.scrape_datetime(),
-                    'article_text': f'{self.scrape_overview()} {self.scrape_article_text()}',
+                    'article_text': article_text,
+                    'type': article_type,
                     'source': self.source
                 })
         return self.data_store
