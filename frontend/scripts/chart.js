@@ -5,41 +5,47 @@ function drawChart(history, prediction) {
         chartInstance.destroy();
     }
 
-    const historyLabels = history.map((_, i) => `Day ${i + 1}`);
-    const predictionLabels = prediction.length
-        ? prediction.map((_, i) => `Future ${i + 1}`)
-        : ["Future 1", "Future 2", "Future 3", "Future 4"];
-
-    const lastHistoryValue = history[history.length - 1];
+    const labels = history.map((_, i) => `День ${i + 1}`);
+    const predictionLabels = prediction.map((_, i) => `Прогноз ${i + 1}`);
 
     chartInstance = new Chart(ctx, {
         type: "line",
         data: {
-            labels: [...historyLabels, ...predictionLabels],
+            labels: [...labels, ...predictionLabels],
             datasets: [
                 {
-                    label: "Цена",
-                    data: [...history, lastHistoryValue],
-                    borderColor: "blue",
-                    fill: false,
-                    borderDash: [],
+                    label: "История",
+                    data: history,
+                    borderColor: "#3861fb",
+                    tension: 0.4,
+                    fill: false
                 },
-                {
+                prediction.length ? {
                     label: "Прогноз",
-                    data: [...Array(history.length).fill(null), lastHistoryValue, ...prediction],
-                    borderColor: "red",
-                    fill: false,
+                    data: [...Array(history.length - 1).fill(null), ...prediction],
+                    borderColor: "#ffffff",
                     borderDash: [5, 5],
-                }
-            ]
+                    tension: 0.4,
+                    fill: false
+                } : null
+            ].filter(Boolean)
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { display: true },
-                y: { display: true }
+                y: {
+                    beginAtZero: false,
+                    title: { display: true, text: "Цена (₽)" }
+                },
+                xAxes: [{ gridLines: { color: "#131c2b" } }],
+                yAxes: [{ gridLines: { color: "#131c2b" } }]
+            },
+            plugins: {
+                legend: { position: "top" }
             }
         }
     });
+
+    document.getElementById("predictBtn").disabled = prediction.length > 0;
 }

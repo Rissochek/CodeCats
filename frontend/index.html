@@ -10,6 +10,9 @@
 </head>
 
 <body>
+    <div id="loader" class="loader" style="display: none;">
+        <div class="spinner"></div>
+    </div>
 
     <div id="screen1" class="container">
         <div class="left">
@@ -26,22 +29,21 @@
         <div class="left">
             <h2 id="stockName"></h2>
             <p>Текущая цена: <span id="stockPrice"></span> ₽</p>
-
             <div class="chart-block">
                 <canvas id="priceChart"></canvas>
             </div>
-
-            <button id="predictBtn">Predict</button>
+            <div class="chart-controls">
+                <button id="predictBtn">Прогнозировать</button>
+                <button id="resetChartBtn">Сбросить график</button>
+            </div>
         </div>
         <div class="right">
-            <h2>Новости, относящиеся к акции</h2>
+            <h2>Новости компании</h2>
             <ul class="news-list" id="stockNews"></ul>
         </div>
     </div>
-
     <script src="./scripts/script.js"></script>
     <script src="./scripts/chart.js"></script>
-
 </body>
 
 </html>
