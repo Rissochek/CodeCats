@@ -24,7 +24,6 @@ function drawChart(history, prediction) {
                     label: "Прогноз",
                     data: [...Array(history.length - 1).fill(null), ...prediction],
                     borderColor: "#ffffff",
-                    borderDash: [5, 5],
                     tension: 0.4,
                     fill: false
                 } : null
@@ -34,15 +33,36 @@ function drawChart(history, prediction) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
+                x: {
+                    grid: {
+                        color: "#323546"
+                    },
+                    ticks: {
+                        color: "#ffffff"
+                    }
+                },
                 y: {
                     beginAtZero: false,
-                    title: { display: true, text: "Цена (₽)" }
+                    title: {
+                        display: true,
+                        color: "#ffffff",
+                        text: "Цена (₽)"
+                    },
+                    grid: {
+                        color: "#323546"
+                    },
+                    ticks: {
+                        color: "#ffffff"
+                    }
                 },
-                xAxes: [{ gridLines: { color: "#131c2b" } }],
-                yAxes: [{ gridLines: { color: "#131c2b" } }]
             },
             plugins: {
-                legend: { position: "top" }
+                legend: {
+                    position: "top",
+                    labels: {
+                        color: "#ffffff"
+                    }
+                }
             }
         }
     });

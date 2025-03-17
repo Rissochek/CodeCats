@@ -104,7 +104,7 @@ function showScreen1(updateHistory = true) {
 async function predictPrice() {
     if (!currentStock) return;
 
-    document.getElementById("loader").style.display = "block";
+    document.getElementById("loader").style.display = "flex";
     try {
         await new Promise(resolve => setTimeout(resolve, 800));
         const lastPrice = currentStock.history.slice(-1)[0];
