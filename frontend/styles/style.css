@@ -1,0 +1,142 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #ffffff;
+    background-color: #0d1421;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.left,
+.right {
+    width: 50%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.stock-list {
+    list-style: none;
+    padding: 0;
+}
+
+.stock-list li {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #ffffff;
+    transition: all 0.2s ease;
+}
+
+.stock-list li:hover {
+    color: #486dfb;
+    border-bottom: 1px solid #486dfb;
+    transform: translateX(5px);
+}
+
+.news-list {
+    padding: 0;
+}
+
+.news-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #ffffff;
+}
+
+.chart-block {
+    width: 100%;
+    height: 300px;
+    margin: 20px 0;
+}
+
+button {
+    background-color: #3861fb;
+    color: #ffffff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    background-color: #486dfb;
+}
+
+.loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(13, 20, 33, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #ffffff;
+    border-top: 4px solid #3861fb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .left,
+    .right {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .chart-block {
+        height: 200px;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+.chart-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+#resetChartBtn {
+    background-color: #323546;
+}
+
+#resetChartBtn:hover {
+    background-color: #2b2e39;
+}
+
+@media (max-width: 768px) {
+    .chart-controls {
+        flex-direction: column;
+    }
+}
