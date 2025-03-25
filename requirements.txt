@@ -1,6 +1,0 @@
-pandas
-numpy
-seaborn
-matplotlib
-pyarrow
-spacy==3.8.4
