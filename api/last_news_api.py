@@ -2,7 +2,7 @@ import requests
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-WEB_PARSER_URL = "http://localhost:8000/service.internal/Interfax"  # Можно добавить Interfax
+WEB_PARSER_URL = "http://localhost:8000/service.internal/web_parser"  # Можно добавить Interfax
 N = 5  # количество последних новостей
 
 

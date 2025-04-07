@@ -3,7 +3,7 @@ import pymorphy3
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-WEB_PARSER_URL = "http://localhost:8000/service.internal/RBC"
+WEB_PARSER_URL = "http://localhost:8000/service.internal/web_parser"
 
 # ключевые слова для компаний
 COMPANY_KEYWORDS = {
