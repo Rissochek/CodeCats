@@ -12,6 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from typing import Tuple
 import requests
 import re
+from datetime import datetime
 from random import uniform
 import pymorphy3
 import time
@@ -168,7 +169,10 @@ class RBCParser(Resource, WebParser):
         self.article_body_scrape = self.article_scrape.find("div", self.article_class_name)
 
     def scrape_article_text(self) -> str:
-        article_text = ' '.join([i.get_text(separator=" ", strip=True).replace("\xa0", " ") for i in self.article_body_scrape.find_all('p')])
+        if self.article_body_scrape != "":
+            article_text = ' '.join([i.get_text(separator=" ", strip=True).replace("\xa0", " ") for i in self.article_body_scrape.find_all('p')])
+        else:
+            article_text = "None"
         return article_text
 
     def scrape_datetime(self) -> str:
@@ -190,6 +194,7 @@ class RBCParser(Resource, WebParser):
             article_type = determine_sphere(article_text)
             if self.scrape_article_text != 'None' and article_type is not None:
                 self.data_store.append({
+                    'link': link,
                     'title': self.scrape_title(),
                     'datetime': self.scrape_datetime(),
                     'article_text': article_text,
@@ -300,8 +305,9 @@ class InterfaxParser(Resource, WebParser):
             article_type = determine_sphere(article_text)
             if self.scrape_article_text != 'None' and article_type is not None:
                 self.data_store.append({
+                    "link": link,
                     'title': self.scrape_title(),
-                    'datetime': self.scrape_datetime(),
+                    'datetime': f"{self.scrape_datetime()}:{str(datetime.now().second)}:+03:00",
                     'article_text': article_text,
                     'type': article_type,
                     'source': self.source
