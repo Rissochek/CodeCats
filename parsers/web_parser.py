@@ -203,6 +203,26 @@ class RBCParser(Resource, WebParser):
                 })
         return self.data_store
     
+    def get_new_data(self, links):
+        count = 1
+        data_store = []
+        for link in links:
+            print(f'link {count} was readed')
+            count += 1
+            self.scrape_article_body(link=link)
+            article_text = f'{self.scrape_overview()} {self.scrape_article_text()}'
+            article_type = determine_sphere(article_text)
+            if self.scrape_article_text != 'None' and article_type is not None:
+                data_store.append({
+                    "link": link,
+                    'title': self.scrape_title(),
+                    'datetime': f"{self.scrape_datetime()}",
+                    'article_text': article_text,
+                    'type': article_type,
+                    'source': self.source
+                })
+        return data_store
+    
     def get(self) -> dict:
         msg = {"number_of_news": "In post request enter num of news u need"}
         return msg
@@ -307,12 +327,32 @@ class InterfaxParser(Resource, WebParser):
                 self.data_store.append({
                     "link": link,
                     'title': self.scrape_title(),
-                    'datetime': f"{self.scrape_datetime()}:{str(datetime.now().second)}:+03:00",
+                    'datetime': f"{self.scrape_datetime()}:00+03:00",
                     'article_text': article_text,
                     'type': article_type,
                     'source': self.source
                 })
         return self.data_store
+    
+    def get_new_data(self, links):
+        count = 1
+        data_store = []
+        for link in links:
+            print(f'link {count} was readed')
+            count += 1
+            self.scrape_article_body(link=link)
+            article_text = f'{self.scrape_overview()} {self.scrape_article_text()}'
+            article_type = determine_sphere(article_text)
+            if self.scrape_article_text != 'None' and article_type is not None:
+                data_store.append({
+                    "link": link,
+                    'title': self.scrape_title(),
+                    'datetime': f"{self.scrape_datetime()}:00+03:00",
+                    'article_text': article_text,
+                    'type': article_type,
+                    'source': self.source
+                })
+        return data_store
     
     def get(self) -> dict:
         msg = {"number_of_news": "In post request enter num of news u need"}
@@ -330,8 +370,52 @@ class InterfaxParser(Resource, WebParser):
         print(len(news))
         return news, 200
 
-api.add_resource(InterfaxParser, '/service.internal/Interfax')
-api.add_resource(RBCParser, '/service.internal/RBC')
+interfax_parser = InterfaxParser()
+rbc_parser = RBCParser()
+while True:
+    response = requests.post("http://localhost:8008/service.internal/get_num_of_news", json={"number_of_news": "10"})
+    if response.status_code == 200:
+        data = response.json()
+        print(data)
+        interfax_parser.scrape_links(5)
+        interfax_links = interfax_parser.links
+        rbc_links = rbc_parser.scrape_links(5)
+        rbc_new_links = [i for i in rbc_links if i not in data]
+        interfax_new_links = [i for i in interfax_links if i not in data]
+        print(rbc_new_links)
+        print(interfax_new_links)
+        actual_news = []
+        # actual_news = [    [{
+        #                     "link": "some link",
+        #                     'title': "some title",
+        #                     'datetime': "2025-04-18T17:50",
+        #                     'article_text': "some text",
+        #                     'type': "some type",
+        #                     'source': "some source"}, "",{
+        #                     "link": "4",
+        #                     'title': "some title",
+        #                     'datetime': "2025-04-18T17:50",
+        #                     'article_text': "some text",
+        #                     'type': "some type",
+        #                     'source': "some source"}, "",
+        #                     {
+        #                     "link": "5",
+        #                     'title': "some title",
+        #                     'datetime': "2025-04-18T17:50",
+        #                     'article_text': "some text",
+        #                     'type': "some type",
+        #                     'source': "some source"}]]
+        if rbc_new_links != []:
+            actual_news.extend(rbc_parser.get_new_data(rbc_new_links))
+        if interfax_new_links != []:
+            actual_news.extend(interfax_parser.get_new_data(interfax_new_links))
+        print(actual_news)
+        requests.post("http://localhost:8008/service.internal/actual_news_gainer", json=actual_news)
+    time.sleep(60*5)
 
-if __name__ == '__main__':
-    app.run(port=8000, debug=True)
+
+# api.add_resource(InterfaxParser, '/service.internal/Interfax')
+# api.add_resource(RBCParser, '/service.internal/RBC')
+
+# if __name__ == '__main__':
+#     app.run(port=8000, debug=True)

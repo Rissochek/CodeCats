@@ -3,7 +3,7 @@ import pymorphy3
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-WEB_PARSER_URL = "http://localhost:8000/service.internal/web_parser"
+WEB_PARSER_URL = "http://localhost:8008/service.internal/get_last_n_news"
 
 # ключевые слова для компаний
 COMPANY_KEYWORDS = {
@@ -29,34 +29,31 @@ def normalize_keywords():
 
 NORMALIZED_COMPANY_KEYWORDS = normalize_keywords()
 
-@app.route('/service.internal/get_company_news', methods=['POST'])
+@app.route('/get_company_news', methods=['POST'])
 def get_company_news():
-    try:
-        data = request.get_json()
-        companies = data.get("companies", [])
-        limit = data.get("limit", 5)
+    data = request.get_json()
+    number_of_news = int(data.get("number_of_news"))
+    company_news = []
 
-        response = requests.post(WEB_PARSER_URL, json={"duration": 5})
+    while(len(company_news) < number_of_news):
+        try:
+            company = data.get("company", [])
+            response = requests.post(WEB_PARSER_URL, json={"number_of_news": 50})
 
-        if response.status_code != 200:
-            return jsonify({"error": "Failed to fetch news"}), 500
+            if response.status_code != 200:
+                return jsonify({"error": "Failed to fetch news"}), 500
 
-        all_news = response.json()
-
-        company_news = []
-        for news in all_news:
-            text_words = normalize_text(news["title"] + " " + news["article_text"])
-            for company in companies:
+            all_news = response.json()
+            for article in all_news:
+                text_words = normalize_text(article["title"] + " " + article["article_text"])
                 if text_words & NORMALIZED_COMPANY_KEYWORDS.get(company, set()):
-                    company_news.append(news)
-                    break
+                    company_news.append(article)
 
-        company_news = company_news[:limit]
-
-        return jsonify(company_news)
-
-    except Exception as e:
-        return jsonify({"error": "Internal server error"}), 500
+        except Exception as e:
+            return jsonify({"error": "Internal server error"}), 500
+        
+    company_news = company_news[:number_of_news]
+    return jsonify(company_news)
 
 if __name__ == '__main__':
-    app.run(port=8006, debug=True)
+    app.run(port=8006, debug=False)
