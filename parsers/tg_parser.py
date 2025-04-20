@@ -194,7 +194,7 @@ class TG_Parser(Resource):
 
         return self.parsed_data, 200
 
-api.add_resource('/service.internal/tg_parser')
+api.add_resource('/service.internal/tg_parser', TG_Parser)
 
 if __name__ == '__main__':
     app.run(port=8001, debug=True)
