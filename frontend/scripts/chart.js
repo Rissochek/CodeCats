@@ -5,7 +5,7 @@ function drawChart(history, prediction) {
         chartInstance.destroy();
     }
 
-    const labels = history.map((_, i) => `День ${i + 1}`);
+    const labels = history.map((_, i) => `Час ${i + 1}`);
     const predictionLabels = prediction.map((_, i) => `Прогноз ${i + 1}`);
 
     chartInstance = new Chart(ctx, {
