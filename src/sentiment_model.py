@@ -229,5 +229,5 @@ class NewsPredictor:
 
 predictor = NewsPredictor('src/models/sphere_Финансы_model.txt')
 print('predictor is loaded fully')
-sentiment = predictor.predict("""Сбербанк объявил о дефолте и закрытии всего акционерного трека""", sphere="Финансы")
+sentiment = predictor.predict("""Ставка по кредитам повысилась на 20%""", sphere="Финансы")
 print(f"Predicted sentiment: {sentiment}")
