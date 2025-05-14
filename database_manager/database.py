@@ -39,6 +39,8 @@ class MOEX(db.Model):
     end: str = Column(DateTime)
     open: float = Column(Float)
     close: str = Column(String)
+    high: float = Column(Float)
+    low: float = Column(Float)
     company: str = Column(String)
 
 parser_links_store = {"Interfax": "http://localhost:8000/service.internal/Interfax",
@@ -54,10 +56,10 @@ def send_request(parser_link):
 
     return response.json() if response else None
 
-def load_data_from_database():
+def load_data_from_database(num_of_news_requested):
 
     links_list = []
-    records = News.query.limit(10).all()
+    records = News.query.limit(num_of_news_requested).all()
 
     for record in records:
         link = record.link
@@ -200,6 +202,8 @@ def load_prices_from_moex():
             end=datetime.strptime(f"{i["end"]}+03:00", "%Y-%m-%d %H:%M:%S%z"),
             open=i["open"],
             close=i["close"],
+            high=i["high"],
+            low=i["low"],
             company=i["company"]
         )
         if db.session.query(MOEX).filter_by(begin=current.begin, end=current.end, open=current.open, close=current.close, company=current.company).first() is None:
@@ -214,6 +218,6 @@ def get_moex_from_database():
     number_of_prices = request.json.get('number_of_prices')
 
     prices = db.session.query(MOEX).filter_by(company=company).limit(number_of_prices).all()
-    return [{"begin": i.begin, "end": i.end, "open": i.open, "close": i.close, "company": i.company} for i in prices]
+    return [{"begin": i.begin, "end": i.end, "open": i.open, "close": i.close, "high": i.high, "low": i.low, "company": i.company} for i in prices]
 if __name__ == '__main__':
     app.run(port=8008, debug=False)
