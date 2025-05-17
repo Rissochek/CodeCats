@@ -28,7 +28,6 @@ app = create_service()
 
 class News(db.Model):
     __tablename__ = 'News'
-
     id: int = Column(Integer, primary_key=True)
     link: str = Column(String)
     title: str = Column(String)
@@ -44,7 +43,9 @@ class MOEX(db.Model):
     begin: str = Column(DateTime)
     end: str = Column(DateTime)
     open: float = Column(Float)
-    close: str = Column(String)
+    close: float = Column(Float)  # Исправлено: close теперь Float
+    high: float = Column(Float)   # Добавлено поле high
+    low: float = Column(Float)    # Добавлено поле low
     company: str = Column(String)
 
 
@@ -59,27 +60,21 @@ def send_request(parser_link):
         print(f"Response status: {response.status_code}")
     except Exception as e:
         print(f"Response error: {e}")
-
     return response.json() if response else None
 
 
 def load_data_from_database():
-
     links_list = []
     records = News.query.limit(10).all()
-
     for record in records:
         link = record.link
-
         links_list.append(link)
-
     return links_list
 
 
 def load_news_from_database(number_of_news):
     news_list = []
     records = News.query.limit(number_of_news).all()
-
     for record in records:
         record_dict = {
             "link": record.link,
@@ -90,7 +85,6 @@ def load_news_from_database(number_of_news):
             "source": record.source
         }
         news_list.append(record_dict)
-
     return news_list
 
 
@@ -98,12 +92,10 @@ links_list = []
 
 
 def check_article_is_unique(article):
-
     if isinstance(article, dict):
         if article["link"] not in links_list:
             links_list.append(article["link"])
             return True
-
     return False
 
 # with app.app_context():
@@ -161,16 +153,13 @@ with app.app_context():
 
 @app.route('/service.internal/get_num_of_news', methods=['POST'])
 def get_num_of_news():
-
     num_of_news_requested = request.json.get('number_of_news')
-    links = load_data_from_database(num_of_news_requested)
-
+    links = load_data_from_database()
     return jsonify(links)
 
 
 @app.route("/service.internal/actual_news_gainer", methods=["POST"])
 def actual_news_gainer():
-
     actual_news = request.json
     print(actual_news)
     if actual_news != []:
@@ -186,16 +175,13 @@ def actual_news_gainer():
             )
             db.session.add(new_article)
             db.session.commit()
-
     return "200"
 
 
 @app.route("/service.internal/get_last_n_news", methods=["POST"])
 def get_last_n_news():
-
     num_of_news_requested = request.json.get('number_of_news')
     news = load_news_from_database(num_of_news_requested)
-
     return jsonify(news)
 
 # @app.route("/service.internal/get_last_n_company_news", methods=["POST"])
@@ -207,6 +193,7 @@ def get_last_n_news():
 # !!!
 # This section is about moex logic
 
+
 @app.route("/service.internal/load_prices_from_moex", methods=['POST'])
 def load_prices_from_moex():
     moex_list = request.json
@@ -217,12 +204,18 @@ def load_prices_from_moex():
             end=datetime.strptime(f"{i['end']}+03:00", "%Y-%m-%d %H:%M:%S%z"),
             open=i["open"],
             close=i["close"],
+            high=i["high"],  # Добавлено
+            low=i["low"],    # Добавлено
             company=i["company"]
         )
-        if db.session.query(MOEX).filter_by(begin=current.begin, end=current.end, open=current.open, close=current.close, company=current.company).first() is None:
+        if db.session.query(MOEX).filter_by(
+            begin=current.begin, end=current.end,
+            open=current.open, close=current.close,
+            high=current.high, low=current.low,
+            company=current.company
+        ).first() is None:
             db.session.add(current)
     db.session.commit()
-
     return "200"
 
 
@@ -230,10 +223,17 @@ def load_prices_from_moex():
 def get_moex_from_database():
     company = request.json.get('company')
     number_of_prices = request.json.get('number_of_prices')
-
     prices = db.session.query(MOEX).filter_by(
         company=company).limit(number_of_prices).all()
-    return [{"begin": i.begin, "end": i.end, "open": i.open, "close": i.close, "company": i.company} for i in prices]
+    return jsonify([{
+        "begin": i.begin,
+        "end": i.end,
+        "open": i.open,
+        "close": i.close,
+        "high": i.high,  # Добавлено
+        "low": i.low,    # Добавлено
+        "company": i.company
+    } for i in prices])
 
 
 if __name__ == '__main__':

@@ -7,18 +7,14 @@ const API_URLS = {
 const modal = document.getElementById("newsModal");
 
 let currentStock = null;
-let chartInstance = null;
-
 
 function showLoader() {
     document.getElementById("loader").style.display = "flex";
 }
 
-
 function hideLoader() {
     document.getElementById("loader").style.display = "none";
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
     loadStocks();
@@ -27,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.onpopstate = handlePopState;
 });
 
-
 async function fetchStockData() {
     try {
         showLoader();
@@ -35,17 +30,17 @@ async function fetchStockData() {
             fetch(API_URLS.lastPrices, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ company: "SBER", number_of_prices: 5 })
+                body: JSON.stringify({ company: "SBER", number_of_prices: 18 })
             }),
             fetch(API_URLS.lastPrices, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ company: "GAZP", number_of_prices: 5 })
+                body: JSON.stringify({ company: "GAZP", number_of_prices: 18 })
             }),
             fetch(API_URLS.lastPrices, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ company: "T", number_of_prices: 5 })
+                body: JSON.stringify({ company: "T", number_of_prices: 18 })
             })
         ]);
 
@@ -54,7 +49,7 @@ async function fetchStockData() {
             name: ["Сбербанк России", "Газпром", "Т технологии"][i],
             ticker: ["SBER", "GAZP", "T"][i],
             price: prices[prices.length - 1].close,
-            history: prices.map(p => p.close),
+            history: prices, // Содержит begin, open, high, low, close
             news: []
         }));
     } catch (error) {
@@ -64,7 +59,6 @@ async function fetchStockData() {
         hideLoader();
     }
 }
-
 
 async function loadStocks() {
     try {
@@ -84,24 +78,20 @@ async function loadStocks() {
             })
         ]);
 
-
         const uniqueNews = mainNewsResponse.ok
             ? (await mainNewsResponse.json()).filter((news, index, self) =>
                 index === self.findIndex(n => n.link === news.link)
             )
             : [];
 
-
         const stockList = document.getElementById("stockList");
         stockList.innerHTML = stocksData.map(stock => `
             <li>${stock.name} - ${stock.price} ₽</li>
         `).join('');
 
-
         document.querySelectorAll("#stockList li").forEach((li, index) => {
             li.addEventListener("click", () => openStock(stocksData[index]));
         });
-
 
         const newsList = document.getElementById("newsList");
         newsList.innerHTML = uniqueNews.map(news => `
@@ -109,7 +99,6 @@ async function loadStocks() {
                 ${news.title} - ${formatDate(news.datetime)}
             </li>
         `).join('');
-
 
         document.querySelectorAll('.news-item').forEach((item, index) => {
             item.addEventListener('click', () => showNewsModal(uniqueNews[index]));
@@ -123,11 +112,9 @@ async function loadStocks() {
     }
 }
 
-
 async function openStock(stock, updateHistory = true) {
     try {
         showLoader();
-
         const [newsResponse] = await Promise.all([
             fetch(API_URLS.companyNews, {
                 method: 'POST',
@@ -146,7 +133,6 @@ async function openStock(stock, updateHistory = true) {
         if (!newsResponse.ok) throw new Error("Ошибка API");
         const companyNews = await newsResponse.json();
 
-
         const uniqueNews = companyNews.filter((news, index, self) =>
             index === self.findIndex(n => n.link === news.link)
         );
@@ -156,7 +142,6 @@ async function openStock(stock, updateHistory = true) {
             news: uniqueNews
         };
 
-
         const stockNews = document.getElementById("stockNews");
         stockNews.innerHTML = currentStock.news.map(news => `
             <li class="news-item">
@@ -164,11 +149,9 @@ async function openStock(stock, updateHistory = true) {
             </li>
         `).join('');
 
-
         document.querySelectorAll('#stockNews .news-item').forEach((item, index) => {
             item.addEventListener('click', () => showNewsModal(currentStock.news[index]));
         });
-
 
         document.getElementById("screen1").style.display = "none";
         document.getElementById("screen2").style.display = "flex";
@@ -188,7 +171,6 @@ async function openStock(stock, updateHistory = true) {
     }
 }
 
-
 function handlePopState(event) {
     if (event.state?.page === "stock") {
         openStock(event.state.stock, false);
@@ -196,7 +178,6 @@ function handlePopState(event) {
         showScreen1(false);
     }
 }
-
 
 function showScreen1(updateHistory = true) {
     document.getElementById("screen1").style.display = "flex";
@@ -207,28 +188,25 @@ function showScreen1(updateHistory = true) {
     }
 }
 
-
 async function predictPrice() {
     if (!currentStock) return;
 
     try {
         showLoader();
         await new Promise(resolve => setTimeout(resolve, 800));
-        const lastPrice = currentStock.history.slice(-1)[0];
-        const prediction = [lastPrice * 1.01, lastPrice * 1.02, lastPrice * 1.03];
+        const lastPrice = currentStock.history.slice(-1)[0].close;
+        const prediction = [lastPrice * 1.01, lastPrice * 1.03, lastPrice * 1.07];
         drawChart(currentStock.history, prediction);
     } finally {
         hideLoader();
     }
 }
 
-
 function resetChart() {
     if (!currentStock) return;
     drawChart(currentStock.history, []);
     document.getElementById("predictBtn").disabled = false;
 }
-
 
 function formatDate(isoString) {
     const date = new Date(isoString);
@@ -241,7 +219,6 @@ function formatDate(isoString) {
     });
 }
 
-
 function showNewsModal(news) {
     document.body.classList.add('modal-open');
     document.getElementById("modalTitle").textContent = news.title;
@@ -249,12 +226,10 @@ function showNewsModal(news) {
     document.getElementById("newsModal").style.display = "block";
 }
 
-
 function closeModal() {
     document.body.classList.remove('modal-open');
     document.getElementById("newsModal").style.display = "none";
 }
-
 
 window.onclick = (e) => {
     if (e.target === modal) closeModal();

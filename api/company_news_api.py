@@ -43,6 +43,7 @@ def get_company_news():
     number_of_news = int(data.get("number_of_news"))
     company_news = []
 
+    count = 0
     while (len(company_news) < number_of_news):
         try:
             company = data.get("company", [])
@@ -58,6 +59,10 @@ def get_company_news():
                     article["title"] + " " + article["article_text"])
                 if text_words & NORMALIZED_COMPANY_KEYWORDS.get(company, set()):
                     company_news.append(article)
+
+            count += 1
+            if count > number_of_news:
+                break
 
         except Exception as e:
             return jsonify({"error": "Internal server error"}), 500
