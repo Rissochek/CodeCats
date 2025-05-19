@@ -1,0 +1,24 @@
+# Основные зависимости
+Flask==3.0.2
+Flask-CORS==4.0.0
+Flask-RESTful==0.3.10
+Flask-SQLAlchemy==3.1.1
+requests==2.31.0
+pymorphy3==2.0.0
+pymorphy3-dicts-ru==2.4.417127.4580152
+
+# Для парсинга и работы с данными
+beautifulsoup4==4.12.3
+selenium==4.18.1
+webdriver-manager==4.0.1
+pandas==2.2.1
+aiomoex==2.0.0
+aiohttp==3.9.3
+python-dateutil==2.9.0.post0
+
+# Telegram парсинг
+telethon==1.34.1
+cryptography==42.0.5  # Зависимость для Telethon
+
+# Базы данных
+sqlalchemy==2.0.28
