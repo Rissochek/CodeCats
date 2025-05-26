@@ -25,6 +25,7 @@ class MOEX_Parser(Resource):
                 print("failed to get data", e)
                 return None
             df = pd.DataFrame(data)
+
             df = df.drop(columns=["value", "high", "low", "volume"])
             df['company'] = company
             df = df[['company', 'open', 'close', 'begin', 'end']]

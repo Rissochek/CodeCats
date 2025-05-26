@@ -8,19 +8,18 @@ CORS(app)
 WEB_PARSER_URL = "http://localhost:8008//service.internal/get_last_n_news"
 
 
+
 @app.route('/get_last_news', methods=['POST'])
 def get_last_news():
     number_of_news = int(request.get_json().get('number_of_news'))
     try:
-        response = requests.post(WEB_PARSER_URL, json={
-                                 "number_of_news": number_of_news})
+        response = requests.post(WEB_PARSER_URL, json={"number_of_news": number_of_news})
 
         if response.status_code != 200:
             return jsonify({"error": "Failed to get data from web_parser"}), 500
 
         news = response.json()
-        last_news = sorted(news, key=lambda x: x['datetime'], reverse=True)[
-            :number_of_news]
+        last_news = sorted(news, key=lambda x: x['datetime'], reverse=True)[:number_of_news]
 
         return jsonify(last_news)
     except Exception as e:

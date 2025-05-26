@@ -1,11 +1,13 @@
 import requests
 import pymorphy3
 from flask import Flask, request, jsonify
+
 from flask_cors import CORS
 
 
 app = Flask(__name__)
 CORS(app)
+
 WEB_PARSER_URL = "http://localhost:8008/service.internal/get_last_n_news"
 
 # ключевые слова для компаний
@@ -20,19 +22,15 @@ COMPANY_KEYWORDS = {
 
 morph = pymorphy3.MorphAnalyzer()
 
-
 def normalize_text(text):
     words = text.split()
     return {morph.parse(word)[0].normal_form for word in words}
 
-
 def normalize_keywords():
     normalized = {}
     for company, keywords in COMPANY_KEYWORDS.items():
-        normalized[company] = {morph.parse(
-            word)[0].normal_form for word in keywords}
+        normalized[company] = {morph.parse(word)[0].normal_form for word in keywords}
     return normalized
-
 
 NORMALIZED_COMPANY_KEYWORDS = normalize_keywords()
 
@@ -42,6 +40,7 @@ def get_company_news():
     data = request.get_json()
     number_of_news = int(data.get("number_of_news"))
     company_news = []
+
 
     count = 0
     while (len(company_news) < number_of_news):
@@ -69,6 +68,7 @@ def get_company_news():
 
     company_news = company_news[:number_of_news]
     return jsonify(company_news)
+
 
 
 if __name__ == '__main__':

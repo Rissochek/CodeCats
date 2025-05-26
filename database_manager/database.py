@@ -14,14 +14,13 @@ engine = create_engine(f'sqlite:///{DATABASE_NAME}')
 Session = sessionmaker(bind=engine)
 db = SQLAlchemy()
 
-
 def create_service():
     database_manager = Flask(__name__)
     CORS(database_manager)
+
     database_manager.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DATABASE_NAME}"
     db.init_app(app=database_manager)
     return database_manager
-
 
 app = create_service()
 
@@ -35,7 +34,6 @@ class News(db.Model):
     article_text: str = Column(String)
     article_type: str = Column(String)
     source: str = Column(String)
-
 
 class MOEX(db.Model):
     __tablename__ = 'MOEX'
@@ -98,6 +96,7 @@ def check_article_is_unique(article):
             return True
     return False
 
+
 # with app.app_context():
 #     db.create_all()
 #     while True:
@@ -131,8 +130,6 @@ def check_article_is_unique(article):
 
 #         news_store.extend([i for i in interfax_news] if interfax_news else "")
 #         news_store.extend([i for i in rbc_news] if rbc_news else "")
-
-
 #         links_list = load_data_from_database()
 #         for i in news_store:
 #             if check_article_is_unique(i):
@@ -143,13 +140,11 @@ def check_article_is_unique(article):
 #                     article_text=i["article_text"],
 #                     article_type=i["type"],
 #                     source=i["source"]
-#                 )
 #                 db.session.add(new_article)
 #                 db.session.commit()
 #         time.sleep(60*5)
 with app.app_context():
     db.create_all()
-
 
 @app.route('/service.internal/get_num_of_news', methods=['POST'])
 def get_num_of_news():
@@ -167,6 +162,7 @@ def actual_news_gainer():
             new_article = News(
                 link=i["link"],
                 title=i["title"],
+
                 datetime=datetime.strptime(
                     i["datetime"], "%Y-%m-%dT%H:%M:%S%z"),
                 article_text=i["article_text"],
@@ -188,11 +184,6 @@ def get_last_n_news():
 # def get_last_n_company_news():
 #     num_of_news_requested = request.json.get('number_of_news')
 #     company_requested = request.json.get('company')
-
-
-# !!!
-# This section is about moex logic
-
 
 @app.route("/service.internal/load_prices_from_moex", methods=['POST'])
 def load_prices_from_moex():
@@ -234,7 +225,5 @@ def get_moex_from_database():
         "low": i.low,    # Добавлено
         "company": i.company
     } for i in prices])
-
-
 if __name__ == '__main__':
     app.run(port=8008, debug=False)
