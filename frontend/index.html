@@ -6,22 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Курсы акций</title>
     <link rel="stylesheet" href="./styles/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/dist/date-fns.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
 
 <body>
-    <div id="loader" class="loader" style="display: none;">
-        <div class="spinner"></div>
-    </div>
-
     <div id="screen1" class="container">
         <div class="left">
             <h2>Курсы акций</h2>
-            <ul class="stock-list" id="stockList"></ul>
+            <ul id="stockList" class="list"></ul>
         </div>
         <div class="right">
             <h2>Новости</h2>
-            <ul class="news-list" id="newsList"></ul>
+            <ul id="newsList" class="list"></ul>
         </div>
     </div>
 
@@ -39,11 +40,23 @@
         </div>
         <div class="right">
             <h2>Новости компании</h2>
-            <ul class="news-list" id="stockNews"></ul>
+            <ul id="stockNews" class="list"></ul>
         </div>
     </div>
-    <script src="./scripts/script.js"></script>
+
+    <div id="newsModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <p id="modalText" class="modal-text"></p>
+        </div>
+    </div>
+
+    <div id="loader" class="loader" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+    
     <script src="./scripts/chart.js"></script>
+    <script src="./scripts/script.js"></script>
 </body>
 
 </html>

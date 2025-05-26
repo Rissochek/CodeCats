@@ -1,44 +1,90 @@
 function drawChart(history, prediction) {
     const ctx = document.getElementById("priceChart").getContext("2d");
 
-    if (chartInstance) {
-        chartInstance.destroy();
+    if (window.chartInstance) {
+        window.chartInstance.destroy();
     }
 
-    const labels = history.map((_, i) => `День ${i + 1}`);
-    const predictionLabels = prediction.map((_, i) => `Прогноз ${i + 1}`);
+    const candleData = history.map(data => ({
+        x: new Date(data.begin),
+        o: parseFloat(data.open),
+        h: parseFloat(data.high),
+        l: parseFloat(data.low),
+        c: parseFloat(data.close)
+    }));
 
-    chartInstance = new Chart(ctx, {
-        type: "line",
+    const datasets = [{
+        label: "История",
+        data: candleData,
+        type: 'candlestick',
+        color: {
+            up: "#00ff00",
+            down: "#ff0000",
+            unchanged: "#ffffff"
+        },
+        barPercentage: 0.5,
+        maxBarThickness: 10
+    }];
+
+    let allDates = candleData.map(d => d.x.getTime());
+
+    if (prediction.length) {
+        const lastDate = new Date(history[history.length - 1].begin);
+        const predictionData = prediction.map((price, i) => {
+            const forecastDate = new Date(lastDate.getTime() + (i + 1) * 3600000);
+            return { x: forecastDate, y: parseFloat(price) };
+        });
+        datasets.push({
+            label: "Прогноз",
+            data: predictionData,
+            type: 'line',
+            borderColor: "#ffffff",
+            tension: 0.4,
+            fill: false,
+            pointRadius: 0
+        });
+        allDates = allDates.concat(predictionData.map(d => d.x.getTime()));
+    }
+
+    const minDate = new Date(Math.min(...allDates) - 1800000); // Запас в 0.5 часа слева
+    const maxDate = new Date(Math.max(...allDates) + 1800000); // Запас в 0.5 часа справа
+
+    window.chartInstance = new Chart(ctx, {
+        type: 'candlestick',
         data: {
-            labels: [...labels, ...predictionLabels],
-            datasets: [
-                {
-                    label: "История",
-                    data: history,
-                    borderColor: "#3861fb",
-                    tension: 0.4,
-                    fill: false
-                },
-                prediction.length ? {
-                    label: "Прогноз",
-                    data: [...Array(history.length - 1).fill(null), ...prediction],
-                    borderColor: "#ffffff",
-                    tension: 0.4,
-                    fill: false
-                } : null
-            ].filter(Boolean)
+            datasets: datasets
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
                 x: {
+                    type: "time",
+                    time: {
+                        unit: "hour",
+                        displayFormats: {
+                            hour: "dd MMM HH:mm"
+                        }
+                    },
+                    min: minDate,
+                    max: maxDate,
+                    offset: true,
+                    ticks: {
+                        source: 'data', // Метки берутся из данных
+                        autoSkip: false, // Показываем все метки
+                        maxRotation: 45,
+                        minRotation: 45,
+                        color: "#ffffff",
+                        callback: function (value, index, values) {
+                            if (index % 3 === 0) {
+                                const date = new Date(value);
+                                return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                            }
+                            return null;
+                        }
+                    },
                     grid: {
                         color: "#323546"
-                    },
-                    ticks: {
-                        color: "#ffffff"
                     }
                 },
                 y: {
@@ -54,18 +100,20 @@ function drawChart(history, prediction) {
                     ticks: {
                         color: "#ffffff"
                     }
-                },
+                }
             },
             plugins: {
                 legend: {
-                    position: "top",
-                    labels: {
-                        color: "#ffffff"
-                    }
+                    display: false
                 }
             }
         }
     });
+
+    // Отладка: выведем диапазон дат в консоль
+    console.log("Min Date:", minDate);
+    console.log("Max Date:", maxDate);
+    console.log("Candle Dates:", candleData.map(d => d.x));
 
     document.getElementById("predictBtn").disabled = prediction.length > 0;
 }

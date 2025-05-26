@@ -2,7 +2,12 @@ import requests
 import pymorphy3
 from flask import Flask, request, jsonify
 
+from flask_cors import CORS
+
+
 app = Flask(__name__)
+CORS(app)
+
 WEB_PARSER_URL = "http://localhost:8008/service.internal/get_last_n_news"
 
 # ключевые слова для компаний
@@ -29,35 +34,42 @@ def normalize_keywords():
 
 NORMALIZED_COMPANY_KEYWORDS = normalize_keywords()
 
+
 @app.route('/get_company_news', methods=['POST'])
 def get_company_news():
     data = request.get_json()
     number_of_news = int(data.get("number_of_news"))
     company_news = []
-    count = 0
 
-    while(len(company_news) < number_of_news):
+
+    count = 0
+    while (len(company_news) < number_of_news):
         try:
             company = data.get("company", [])
-            response = requests.post(WEB_PARSER_URL, json={"number_of_news": 50})
-            
+            response = requests.post(WEB_PARSER_URL, json={
+                                     "number_of_news": 50})
+
             if response.status_code != 200:
                 return jsonify({"error": "Failed to fetch news"}), 500
-            
-            if count > 5:
-                return 200
+
             all_news = response.json()
             for article in all_news:
-                text_words = normalize_text(article["title"] + " " + article["article_text"])
+                text_words = normalize_text(
+                    article["title"] + " " + article["article_text"])
                 if text_words & NORMALIZED_COMPANY_KEYWORDS.get(company, set()):
                     company_news.append(article)
+
             count += 1
+            if count > number_of_news:
+                break
 
         except Exception as e:
             return jsonify({"error": "Internal server error"}), 500
-        
+
     company_news = company_news[:number_of_news]
     return jsonify(company_news)
+
+
 
 if __name__ == '__main__':
     app.run(port=8006, debug=False)

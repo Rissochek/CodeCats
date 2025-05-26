@@ -1,8 +1,13 @@
 import requests
 from flask import Flask, request, jsonify
+from flask_cors import CORS
+
 
 app = Flask(__name__)
-WEB_PARSER_URL = "http://localhost:8008//service.internal/get_last_n_news" 
+CORS(app)
+WEB_PARSER_URL = "http://localhost:8008//service.internal/get_last_n_news"
+
+
 
 @app.route('/get_last_news', methods=['POST'])
 def get_last_news():

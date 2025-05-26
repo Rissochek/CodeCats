@@ -25,9 +25,10 @@ class MOEX_Parser(Resource):
                 print("failed to get data", e)
                 return None
             df = pd.DataFrame(data)
-            df = df.drop(columns=["value", "volume"])
+
+            df = df.drop(columns=["value", "high", "low", "volume"])
             df['company'] = company
-            df = df[['company', 'open', 'close', 'begin', 'end', 'high', 'low']]
+            df = df[['company', 'open', 'close', 'begin', 'end']]
             return df
 
     async def main(self, start, end):
@@ -55,8 +56,10 @@ class MOEX_Parser(Resource):
 parser = MOEX_Parser()
 data = []
 try:
-    data = asyncio.run(parser.main((datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"),
-        datetime.now().strftime("%Y-%m-%d")))
+    data = asyncio.run(parser.main(
+        (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"),
+        datetime.now().strftime("%Y-%m-%d")
+    ))
 except Exception as e:
     print("Failed to parse MOEX", e)
 print(data[:10])
