@@ -34,20 +34,24 @@ def get_company_news():
     data = request.get_json()
     number_of_news = int(data.get("number_of_news"))
     company_news = []
+    count = 0
 
     while(len(company_news) < number_of_news):
         try:
             company = data.get("company", [])
             response = requests.post(WEB_PARSER_URL, json={"number_of_news": 50})
-
+            
             if response.status_code != 200:
                 return jsonify({"error": "Failed to fetch news"}), 500
-
+            
+            if count > 5:
+                return 200
             all_news = response.json()
             for article in all_news:
                 text_words = normalize_text(article["title"] + " " + article["article_text"])
                 if text_words & NORMALIZED_COMPANY_KEYWORDS.get(company, set()):
                     company_news.append(article)
+            count += 1
 
         except Exception as e:
             return jsonify({"error": "Internal server error"}), 500

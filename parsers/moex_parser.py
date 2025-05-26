@@ -55,7 +55,8 @@ class MOEX_Parser(Resource):
 parser = MOEX_Parser()
 data = []
 try:
-    data = asyncio.run(parser.main("2025-04-14", "2025-05-14"))
+    data = asyncio.run(parser.main((datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"),
+        datetime.now().strftime("%Y-%m-%d")))
 except Exception as e:
     print("Failed to parse MOEX", e)
 print(data[:10])

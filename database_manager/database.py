@@ -38,7 +38,7 @@ class MOEX(db.Model):
     begin: str = Column(DateTime)
     end: str = Column(DateTime)
     open: float = Column(Float)
-    close: str = Column(String)
+    close: str = Column(Float)
     high: float = Column(Float)
     low: float = Column(Float)
     company: str = Column(String)
