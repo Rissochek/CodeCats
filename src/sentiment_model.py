@@ -5,39 +5,6 @@ import os
 import re
 import json
 import spacy
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.decomposition import LatentDirichletAllocation, NMF
-from sentence_transformers import SentenceTransformer
-import pickle
-
-
-def load_preprocessor(name, input_dir='models'):
-    """
-    Загружает предобработчик из указанной директории.
-    
-    Args:
-        name (str): Имя предобработчика
-        input_dir (str): Директория, откуда загружать
-        
-    Returns:
-        object: Загруженный предобработчик
-    """
-    file_path = os.path.join(input_dir, f"{name}.pkl")
-    
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as f:
-            return pickle.load(f)
-    else:
-        return None
-
-import pandas as pd
-import numpy as np
-from lightgbm import Booster
-import os
-import re
-import json
-import spacy
 import pickle
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
