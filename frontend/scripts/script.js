@@ -49,7 +49,7 @@ async function fetchStockData() {
             name: ["Сбербанк России", "Газпром", "Т технологии"][i],
             ticker: ["SBER", "GAZP", "T"][i],
             price: prices[prices.length - 1].close,
-            history: prices, // Содержит begin, open, high, low, close
+            history: prices,
             news: []
         }));
     } catch (error) {

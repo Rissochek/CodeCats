@@ -70,8 +70,8 @@ function drawChart(history, prediction) {
                     max: maxDate,
                     offset: true,
                     ticks: {
-                        source: 'data', // Метки берутся из данных
-                        autoSkip: false, // Показываем все метки
+                        source: 'data',
+                        autoSkip: false,
                         maxRotation: 45,
                         minRotation: 45,
                         color: "#ffffff",
@@ -109,11 +109,6 @@ function drawChart(history, prediction) {
             }
         }
     });
-
-    // Отладка: выведем диапазон дат в консоль
-    console.log("Min Date:", minDate);
-    console.log("Max Date:", maxDate);
-    console.log("Candle Dates:", candleData.map(d => d.x));
 
     document.getElementById("predictBtn").disabled = prediction.length > 0;
 }
