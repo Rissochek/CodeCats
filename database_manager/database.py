@@ -14,6 +14,7 @@ engine = create_engine(f'sqlite:///{DATABASE_NAME}')
 Session = sessionmaker(bind=engine)
 db = SQLAlchemy()
 
+
 def create_service():
     database_manager = Flask(__name__)
     CORS(database_manager)
@@ -21,6 +22,7 @@ def create_service():
     database_manager.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DATABASE_NAME}"
     db.init_app(app=database_manager)
     return database_manager
+
 
 app = create_service()
 
@@ -34,6 +36,7 @@ class News(db.Model):
     article_text: str = Column(String)
     article_type: str = Column(String)
     source: str = Column(String)
+
 
 class MOEX(db.Model):
     __tablename__ = 'MOEX'
@@ -146,6 +149,7 @@ def check_article_is_unique(article):
 with app.app_context():
     db.create_all()
 
+
 @app.route('/service.internal/get_num_of_news', methods=['POST'])
 def get_num_of_news():
     num_of_news_requested = request.json.get('number_of_news')
@@ -185,6 +189,7 @@ def get_last_n_news():
 #     num_of_news_requested = request.json.get('number_of_news')
 #     company_requested = request.json.get('company')
 
+
 @app.route("/service.internal/load_prices_from_moex", methods=['POST'])
 def load_prices_from_moex():
     moex_list = request.json
@@ -212,18 +217,25 @@ def load_prices_from_moex():
 
 @app.route("/service.internal/get_moex_from_database", methods=["POST"])
 def get_moex_from_database():
+
     company = request.json.get('company')
     number_of_prices = request.json.get('number_of_prices')
-    prices = db.session.query(MOEX).filter_by(
-        company=company).limit(number_of_prices).all()
+
+    latest_prices = db.session.query(MOEX).filter_by(
+        company=company).order_by(MOEX.begin.desc()).limit(number_of_prices).all()
+
+    sorted_prices = sorted(latest_prices, key=lambda x: x.begin)
+
     return jsonify([{
         "begin": i.begin,
         "end": i.end,
         "open": i.open,
         "close": i.close,
-        "high": i.high,  # Добавлено
-        "low": i.low,    # Добавлено
+        "high": i.high,
+        "low": i.low,
         "company": i.company
-    } for i in prices])
+    } for i in sorted_prices])
+
+
 if __name__ == '__main__':
     app.run(port=8008, debug=False)
